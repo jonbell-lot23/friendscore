@@ -175,7 +175,7 @@ function FriendScoreRoom() {
           <div className="text-center">
             {!isDragging && finalScore === null ? (
               <div 
-                className="w-48 h-48 rounded-full border-8 border-white/80"
+                className="w-64 h-64 rounded-full border-8 border-white/80"
               ></div>
             ) : (
               <div 
@@ -192,6 +192,19 @@ function FriendScoreRoom() {
           </div>
         </div>
 
+
+        {/* My cursor */}
+        {myPresence.cursor && containerRef.current && (
+          <div
+            className="absolute pointer-events-none z-30 transform -translate-x-1/2 -translate-y-1/2"
+            style={{
+              left: myPresence.cursor.x * containerRef.current.getBoundingClientRect().width,
+              top: myPresence.cursor.y * containerRef.current.getBoundingClientRect().height,
+            }}
+          >
+            <div className="w-12 h-12 rounded-full bg-blue-400/80 shadow-lg"></div>
+          </div>
+        )}
 
         {/* Other users' cursors */}
         {others.map(({ connectionId, presence }) => {
@@ -211,7 +224,7 @@ function FriendScoreRoom() {
               }}
             >
               {/* Cursor dot */}
-              <div className="w-8 h-8 rounded-full bg-white/80 shadow-lg"></div>
+              <div className="w-12 h-12 rounded-full bg-white/80 shadow-lg"></div>
             </div>
           )
         })}
