@@ -19,7 +19,7 @@ function FriendScoreRoom() {
   useEffect(() => {
     async function loadTodaysScore() {
       const todaysScore = await getTodaysScore()
-      if (todaysScore !== null) {
+      if (todaysScore !== null && todaysScore > 0) {
         setFinalScore(todaysScore)
       }
     }
