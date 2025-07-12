@@ -202,7 +202,7 @@ function FriendScoreRoom() {
               top: myPresence.cursor.y * containerRef.current.getBoundingClientRect().height,
             }}
           >
-            <div className="w-18 h-18 rounded-full bg-blue-400/80 shadow-lg"></div>
+            <div className="w-20 h-20 rounded-full bg-blue-400/80 shadow-lg"></div>
           </div>
         )}
 
@@ -224,7 +224,7 @@ function FriendScoreRoom() {
               }}
             >
               {/* Cursor dot */}
-              <div className="w-18 h-18 rounded-full bg-white/80 shadow-lg"></div>
+              <div className="w-20 h-20 rounded-full bg-white/80 shadow-lg"></div>
             </div>
           )
         })}
