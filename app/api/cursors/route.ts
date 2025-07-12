@@ -13,11 +13,11 @@ const cursors = new Map<string, {
 // Clean up old cursors every 30 seconds
 setInterval(() => {
   const now = Date.now()
-  for (const [userId, cursor] of cursors.entries()) {
+  cursors.forEach((cursor, userId) => {
     if (now - cursor.lastSeen > 30000) { // 30 seconds
       cursors.delete(userId)
     }
-  }
+  })
 }, 30000)
 
 export async function POST(request: NextRequest) {
@@ -51,10 +51,13 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   // Return all active cursors
-  const activeCursors = Array.from(cursors.entries()).map(([userId, cursor]) => ({
-    userId,
-    ...cursor
-  }))
+  const activeCursors: any[] = []
+  cursors.forEach((cursor, userId) => {
+    activeCursors.push({
+      userId,
+      ...cursor
+    })
+  })
   
   return Response.json({ cursors: activeCursors })
 }

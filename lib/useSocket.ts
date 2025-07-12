@@ -22,7 +22,7 @@ export function useSocket() {
 
     setIsConnected(true)
 
-    // Poll for other cursors every 500ms
+    // Poll for other cursors every 33ms for 30fps animation
     const pollInterval = setInterval(async () => {
       try {
         const response = await fetch('/api/cursors')
@@ -42,15 +42,22 @@ export function useSocket() {
       } catch (error) {
         console.error('Failed to fetch cursors:', error)
       }
-    }, 500)
+    }, 33)
 
     return () => {
       clearInterval(pollInterval)
     }
   }, [])
 
+  const lastBroadcastRef = useRef<number>(0)
+  
   const broadcastCursor = async (cursorData: { x: number; y: number; isDragging: boolean; score?: number }) => {
     if (!userIdRef.current) return
+
+    // Throttle broadcasts to every 16ms for 60fps sending
+    const now = Date.now()
+    if (now - lastBroadcastRef.current < 16) return
+    lastBroadcastRef.current = now
 
     try {
       await fetch('/api/cursors', {
