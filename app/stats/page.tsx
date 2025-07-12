@@ -7,8 +7,8 @@ const pool = new Pool({
   }
 })
 
-function formatRelativeTime(date: string): string {
-  const scoreDate = new Date(date + 'T00:00:00Z') // Treat as UTC to avoid timezone issues
+function formatRelativeTime(dateString: string): string {
+  const scoreDate = new Date(dateString + 'T00:00:00Z') // Treat as UTC to avoid timezone issues
   const now = new Date()
   const diffMs = now.getTime() - scoreDate.getTime()
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
@@ -21,6 +21,18 @@ function formatRelativeTime(date: string): string {
   if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`
   if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`
   return `${Math.floor(diffDays / 365)} years ago`
+}
+
+function formatLastModified(dateString: string): string {
+  const date = new Date(dateString)
+  return date.toLocaleString('en-NZ', {
+    timeZone: 'Pacific/Auckland',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }
 
 async function getScoreStats() {
@@ -89,14 +101,7 @@ export default async function StatsPage() {
                       {formatRelativeTime(score.date)}
                     </td>
                     <td className="px-6 py-4 text-white/60 text-sm">
-                      {new Date(score.updated_at).toLocaleString('en-NZ', {
-                        timeZone: 'Pacific/Auckland',
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
+                      {formatLastModified(score.updated_at)}
                     </td>
                   </tr>
                 ))
