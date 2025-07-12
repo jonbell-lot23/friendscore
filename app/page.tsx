@@ -1,9 +1,11 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
 import { getTodaysScore, saveScore } from '../lib/database'
-import { useSocket } from '../lib/useSocket'
+import { RoomProvider, useMyPresence, useOthers } from '../lib/liveblocks'
 
-export default function FriendScoreApp() {
+function FriendScoreRoom() {
+  const [myPresence, updateMyPresence] = useMyPresence()
+  const others = useOthers()
   const [isDragging, setIsDragging] = useState(false)
   const [score, setScore] = useState(0)
   const [finalScore, setFinalScore] = useState<number | null>(null)
@@ -37,7 +39,6 @@ export default function FriendScoreApp() {
     setScore(calculateScore(clientY, rect))
   }
 
-  const { isConnected, otherCursors, broadcastCursor } = useSocket()
   const [overlapDuration, setOverlapDuration] = useState(0)
   const overlapStartTimeRef = useRef<number | null>(null)
 
@@ -53,17 +54,26 @@ export default function FriendScoreApp() {
       setScore(calculateScore(clientY, rect))
     }
     
+    // Update my presence with cursor position
+    updateMyPresence({
+      cursor: { x: relativeX / rect.width, y: relativeY / rect.height },
+      isDragging,
+      score: isDragging ? calculateScore(clientY, rect) : undefined
+    })
+    
     // Check for overlaps with other cursors
     const centerDistance = 100 // Distance threshold for overlap (pixels)
     let hasOverlap = false
     
-    Array.from(otherCursors.values()).forEach(cursor => {
-      const otherX = cursor.x * rect.width
-      const otherY = cursor.y * rect.height
-      const distance = Math.sqrt(Math.pow(relativeX - otherX, 2) + Math.pow(relativeY - otherY, 2))
-      
-      if (distance < centerDistance) {
-        hasOverlap = true
+    others.forEach(({ presence }) => {
+      if (presence.cursor) {
+        const otherX = presence.cursor.x * rect.width
+        const otherY = presence.cursor.y * rect.height
+        const distance = Math.sqrt(Math.pow(relativeX - otherX, 2) + Math.pow(relativeY - otherY, 2))
+        
+        if (distance < centerDistance) {
+          hasOverlap = true
+        }
       }
     })
     
@@ -78,14 +88,6 @@ export default function FriendScoreApp() {
       overlapStartTimeRef.current = null
       setOverlapDuration(0)
     }
-
-    // Broadcast cursor position to other users
-    broadcastCursor({
-      x: relativeX / rect.width, // Normalize to 0-1 range
-      y: relativeY / rect.height, // Normalize to 0-1 range
-      isDragging,
-      score: isDragging ? calculateScore(clientY, rect) : undefined
-    })
   }
 
   const handleEnd = async () => {
@@ -218,16 +220,16 @@ export default function FriendScoreApp() {
 
 
         {/* Other users' cursors */}
-        {Array.from(otherCursors.values()).map((cursor) => {
-          if (!containerRef.current) return null
+        {others.map(({ connectionId, presence }) => {
+          if (!containerRef.current || !presence.cursor) return null
           
           const rect = containerRef.current.getBoundingClientRect()
-          const x = cursor.x * rect.width
-          const y = cursor.y * rect.height
+          const x = presence.cursor.x * rect.width
+          const y = presence.cursor.y * rect.height
           
           return (
             <div
-              key={cursor.userId}
+              key={connectionId}
               className="absolute pointer-events-none z-30 transform -translate-x-1/2 -translate-y-1/2"
               style={{
                 left: x,
@@ -242,21 +244,26 @@ export default function FriendScoreApp() {
                   opacity: Math.max(1 - (overlapDuration / 5000), 0.5)
                 }}
               ></div>
-              
-              {/* Score display when dragging */}
-              {cursor.isDragging && cursor.score !== undefined && (
-                <div 
-                  className="absolute top-6 left-1/2 transform -translate-x-1/2 px-2 py-1 rounded text-xs font-bold text-white shadow-lg"
-                  style={{ backgroundColor: cursor.color }}
-                >
-                  {cursor.score}
-                </div>
-              )}
             </div>
           )
         })}
 
       </div>
     </div>
+  )
+}
+
+export default function FriendScoreApp() {
+  return (
+    <RoomProvider 
+      id="friendscore-room"
+      initialPresence={{
+        cursor: null,
+        isDragging: false,
+        score: undefined
+      }}
+    >
+      <FriendScoreRoom />
+    </RoomProvider>
   )
 }
