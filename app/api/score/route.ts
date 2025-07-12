@@ -9,7 +9,10 @@ const pool = new Pool({
 })
 
 export async function GET() {
-  const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD format
+  // Get today's date in NZ timezone
+  const today = new Date().toLocaleDateString('en-CA', { 
+    timeZone: 'Pacific/Auckland' 
+  }) // YYYY-MM-DD format
   
   try {
     const result = await pool.query(
@@ -27,7 +30,10 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD format
+  // Get today's date in NZ timezone
+  const today = new Date().toLocaleDateString('en-CA', { 
+    timeZone: 'Pacific/Auckland' 
+  }) // YYYY-MM-DD format
   
   try {
     const { score } = await request.json()
