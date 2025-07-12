@@ -6,6 +6,11 @@ import { RoomProvider, useMyPresence, useOthers } from '../lib/liveblocks'
 function FriendScoreRoom() {
   const [myPresence, updateMyPresence] = useMyPresence()
   const others = useOthers()
+  
+  // Add error handling
+  useEffect(() => {
+    console.log('Liveblocks connected. Others:', others.length)
+  }, [others.length])
   const [isDragging, setIsDragging] = useState(false)
   const [score, setScore] = useState(0)
   const [finalScore, setFinalScore] = useState<number | null>(null)

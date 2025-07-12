@@ -2,10 +2,7 @@ import { createClient } from "@liveblocks/client"
 import { createRoomContext } from "@liveblocks/react"
 
 const client = createClient({
-  // For now, we'll use the public key approach for development
-  // In production, you'd want to use authentication
-  publicApiKey: "pk_dev_friendscore", // This is a placeholder - Liveblocks will work without a real key for local dev
-  
+  authEndpoint: "/api/liveblocks-auth",
   // Throttle updates to 60fps max
   throttle: 16,
 })
