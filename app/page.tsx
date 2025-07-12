@@ -66,33 +66,8 @@ function FriendScoreRoom() {
       score: isDragging ? calculateScore(clientY, rect) : undefined
     })
     
-    // Check for overlaps with other cursors
-    const centerDistance = 100 // Distance threshold for overlap (pixels)
-    let hasOverlap = false
-    
-    others.forEach(({ presence }) => {
-      if (presence.cursor) {
-        const otherX = presence.cursor.x * rect.width
-        const otherY = presence.cursor.y * rect.height
-        const distance = Math.sqrt(Math.pow(relativeX - otherX, 2) + Math.pow(relativeY - otherY, 2))
-        
-        if (distance < centerDistance) {
-          hasOverlap = true
-        }
-      }
-    })
-    
-    // Track overlap duration
-    if (hasOverlap) {
-      if (overlapStartTimeRef.current === null) {
-        overlapStartTimeRef.current = Date.now()
-      }
-      const duration = Date.now() - overlapStartTimeRef.current
-      setOverlapDuration(duration)
-    } else {
-      overlapStartTimeRef.current = null
-      setOverlapDuration(0)
-    }
+    // No more blur effects - remove overlap tracking
+    setOverlapDuration(0)
   }
 
   const handleEnd = async () => {
@@ -200,21 +175,15 @@ function FriendScoreRoom() {
           <div className="text-center">
             {!isDragging && finalScore === null ? (
               <div 
-                className="w-48 h-48 rounded-full border-8 border-white transition-all duration-75"
-                style={{
-                  filter: `blur(${Math.min(overlapDuration / 100, 10)}px)`,
-                  opacity: Math.max(1 - (overlapDuration / 5000), 0.5)
-                }}
+                className="w-48 h-48 rounded-full border-8 border-white/80"
               ></div>
             ) : (
               <div 
-                className={`text-8xl md:text-9xl font-bold transition-all duration-75 ${
-                  (isDragging ? score : finalScore) === 100 ? 'text-yellow-400' : 'text-white'
+                className={`text-8xl md:text-9xl font-bold ${
+                  (isDragging ? score : finalScore) === 100 ? 'text-yellow-400/90' : 'text-white/90'
                 }`} 
                 style={{ 
-                  fontFamily: 'Marker Felt',
-                  filter: `blur(${Math.min(overlapDuration / 100, 10)}px)`,
-                  opacity: Math.max(1 - (overlapDuration / 5000), 0.5)
+                  fontFamily: 'Marker Felt'
                 }}
               >
                 {isDragging ? score : finalScore}
@@ -242,13 +211,7 @@ function FriendScoreRoom() {
               }}
             >
               {/* Cursor dot */}
-              <div 
-                className="w-8 h-8 rounded-full bg-white shadow-lg transition-all duration-75"
-                style={{
-                  filter: `blur(${Math.min(overlapDuration / 100, 10)}px)`,
-                  opacity: Math.max(1 - (overlapDuration / 5000), 0.5)
-                }}
-              ></div>
+              <div className="w-8 h-8 rounded-full bg-white/80 shadow-lg"></div>
             </div>
           )
         })}
