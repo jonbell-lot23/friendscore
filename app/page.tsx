@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
 import { getTodaysScore, saveScore } from '../lib/database'
+import { useSocket } from '../lib/useSocket'
 
 export default function FriendScoreApp() {
   const [isDragging, setIsDragging] = useState(false)
@@ -36,12 +37,55 @@ export default function FriendScoreApp() {
     setScore(calculateScore(clientY, rect))
   }
 
+  const { isConnected, otherCursors, broadcastCursor } = useSocket()
+  const [overlapDuration, setOverlapDuration] = useState(0)
+  const overlapStartTimeRef = useRef<number | null>(null)
+
   const handleMove = (clientX: number, clientY: number) => {
-    if (!isDragging || !containerRef.current) return
+    if (!containerRef.current) return
     
     const rect = containerRef.current.getBoundingClientRect()
-    setDragPosition({ x: clientX - rect.left, y: clientY - rect.top })
-    setScore(calculateScore(clientY, rect))
+    const relativeX = clientX - rect.left
+    const relativeY = clientY - rect.top
+    
+    if (isDragging) {
+      setDragPosition({ x: relativeX, y: relativeY })
+      setScore(calculateScore(clientY, rect))
+    }
+    
+    // Check for overlaps with other cursors
+    const centerDistance = 100 // Distance threshold for overlap (pixels)
+    let hasOverlap = false
+    
+    Array.from(otherCursors.values()).forEach(cursor => {
+      const otherX = cursor.x * rect.width
+      const otherY = cursor.y * rect.height
+      const distance = Math.sqrt(Math.pow(relativeX - otherX, 2) + Math.pow(relativeY - otherY, 2))
+      
+      if (distance < centerDistance) {
+        hasOverlap = true
+      }
+    })
+    
+    // Track overlap duration
+    if (hasOverlap) {
+      if (overlapStartTimeRef.current === null) {
+        overlapStartTimeRef.current = Date.now()
+      }
+      const duration = Date.now() - overlapStartTimeRef.current
+      setOverlapDuration(duration)
+    } else {
+      overlapStartTimeRef.current = null
+      setOverlapDuration(0)
+    }
+
+    // Broadcast cursor position to other users
+    broadcastCursor({
+      x: relativeX / rect.width, // Normalize to 0-1 range
+      y: relativeY / rect.height, // Normalize to 0-1 range
+      isDragging,
+      score: isDragging ? calculateScore(clientY, rect) : undefined
+    })
   }
 
   const handleEnd = async () => {
@@ -71,9 +115,26 @@ export default function FriendScoreApp() {
   }
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    e.preventDefault()
     handleMove(e.clientX, e.clientY)
   }
+
+  // Handle mouse movement even when not dragging (for cursor sharing)
+  useEffect(() => {
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect()
+        if (e.clientX >= rect.left && e.clientX <= rect.right && 
+            e.clientY >= rect.top && e.clientY <= rect.bottom) {
+          handleMove(e.clientX, e.clientY)
+        }
+      }
+    }
+
+    document.addEventListener('mousemove', handleGlobalMouseMove)
+    return () => {
+      document.removeEventListener('mousemove', handleGlobalMouseMove)
+    }
+  }, [isDragging])
 
   useEffect(() => {
     const handleGlobalMouseMove = (e: MouseEvent) => {
@@ -131,19 +192,69 @@ export default function FriendScoreApp() {
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center">
             {!isDragging && finalScore === null ? (
-              <div className="w-32 h-32 rounded-full border-8 border-white/60"></div>
+              <div 
+                className="w-48 h-48 rounded-full border-8 border-white transition-all duration-300"
+                style={{
+                  filter: `blur(${Math.min(overlapDuration / 100, 10)}px)`,
+                  opacity: Math.max(1 - (overlapDuration / 5000), 0.5)
+                }}
+              ></div>
             ) : (
               <div 
-                className={`text-8xl md:text-9xl font-bold ${
+                className={`text-8xl md:text-9xl font-bold transition-all duration-300 ${
                   (isDragging ? score : finalScore) === 100 ? 'text-yellow-400' : 'text-white'
                 }`} 
-                style={{ fontFamily: 'Marker Felt' }}
+                style={{ 
+                  fontFamily: 'Marker Felt',
+                  filter: `blur(${Math.min(overlapDuration / 100, 10)}px)`,
+                  opacity: Math.max(1 - (overlapDuration / 5000), 0.5)
+                }}
               >
                 {isDragging ? score : finalScore}
               </div>
             )}
           </div>
         </div>
+
+
+        {/* Other users' cursors */}
+        {Array.from(otherCursors.values()).map((cursor) => {
+          if (!containerRef.current) return null
+          
+          const rect = containerRef.current.getBoundingClientRect()
+          const x = cursor.x * rect.width
+          const y = cursor.y * rect.height
+          
+          return (
+            <div
+              key={cursor.userId}
+              className="absolute pointer-events-none z-30 transform -translate-x-1/2 -translate-y-1/2"
+              style={{
+                left: x,
+                top: y,
+              }}
+            >
+              {/* Cursor dot */}
+              <div 
+                className="w-8 h-8 rounded-full bg-white shadow-lg transition-all duration-300"
+                style={{
+                  filter: `blur(${Math.min(overlapDuration / 100, 10)}px)`,
+                  opacity: Math.max(1 - (overlapDuration / 5000), 0.5)
+                }}
+              ></div>
+              
+              {/* Score display when dragging */}
+              {cursor.isDragging && cursor.score !== undefined && (
+                <div 
+                  className="absolute top-6 left-1/2 transform -translate-x-1/2 px-2 py-1 rounded text-xs font-bold text-white shadow-lg"
+                  style={{ backgroundColor: cursor.color }}
+                >
+                  {cursor.score}
+                </div>
+              )}
+            </div>
+          )
+        })}
 
       </div>
     </div>
