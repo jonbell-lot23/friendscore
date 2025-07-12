@@ -175,7 +175,7 @@ function FriendScoreRoom() {
           <div className="text-center">
             {!isDragging && finalScore === null ? (
               <div 
-                className="w-64 h-64 rounded-full border-8 border-white/80"
+                className="w-32 h-32 rounded-full border-8 border-white/80"
               ></div>
             ) : (
               <div 
@@ -202,7 +202,7 @@ function FriendScoreRoom() {
               top: myPresence.cursor.y * containerRef.current.getBoundingClientRect().height,
             }}
           >
-            <div className="w-12 h-12 rounded-full bg-blue-400/80 shadow-lg"></div>
+            <div className="w-18 h-18 rounded-full bg-blue-400/80 shadow-lg"></div>
           </div>
         )}
 
@@ -224,7 +224,7 @@ function FriendScoreRoom() {
               }}
             >
               {/* Cursor dot */}
-              <div className="w-12 h-12 rounded-full bg-white/80 shadow-lg"></div>
+              <div className="w-18 h-18 rounded-full bg-white/80 shadow-lg"></div>
             </div>
           )
         })}
