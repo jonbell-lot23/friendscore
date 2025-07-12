@@ -8,7 +8,7 @@ interface ScoreData {
   updated_at: string
 }
 
-function formatRelativeTime(dateString: string): string {
+function formatRelativeDate(dateString: string): string {
   const scoreDate = new Date(dateString + 'T00:00:00Z')
   const now = new Date()
   const diffMs = now.getTime() - scoreDate.getTime()
@@ -24,16 +24,21 @@ function formatRelativeTime(dateString: string): string {
   return `${Math.floor(diffDays / 365)} years ago`
 }
 
-function formatLastModified(dateString: string): string {
+function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString)
-  return date.toLocaleString('en-NZ', {
-    timeZone: 'Pacific/Auckland',
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMinutes = Math.floor(diffMs / (1000 * 60))
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  
+  if (diffMinutes < 1) return 'Just now'
+  if (diffMinutes < 60) return `${diffMinutes} minutes ago`
+  if (diffHours < 24) return `${diffHours} hours ago`
+  if (diffDays < 7) return `${diffDays} days ago`
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`
+  if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`
+  return `${Math.floor(diffDays / 365)} years ago`
 }
 
 export default function StatsPage() {
@@ -61,7 +66,7 @@ export default function StatsPage() {
   return (
     <div className="min-h-screen bg-emerald-900 p-8">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold text-white mb-8 text-center" style={{ fontFamily: 'Marker Felt' }}>
+        <h1 className="text-4xl font-bold text-white mb-8 text-center">
           FriendScore Stats
         </h1>
         
@@ -71,44 +76,39 @@ export default function StatsPage() {
               <tr className="bg-white/20">
                 <th className="px-6 py-3 text-left text-white font-semibold">Date</th>
                 <th className="px-6 py-3 text-left text-white font-semibold">Score</th>
-                <th className="px-6 py-3 text-left text-white font-semibold">When</th>
-                <th className="px-6 py-3 text-left text-white font-semibold">Last Modified</th>
+                <th className="px-6 py-3 text-left text-white font-semibold">Modified</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-8 text-center text-white/60">
+                  <td colSpan={3} className="px-6 py-8 text-center text-white/60">
                     Loading...
                   </td>
                 </tr>
               ) : scores.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-8 text-center text-white/60">
+                  <td colSpan={3} className="px-6 py-8 text-center text-white/60">
                     No scores recorded yet
                   </td>
                 </tr>
               ) : (
                 scores.map((score) => (
                   <tr key={score.date} className="border-t border-white/10 hover:bg-white/5">
-                    <td className="px-6 py-4 text-white font-mono">
-                      {score.date}
+                    <td className="px-6 py-4 text-white">
+                      {formatRelativeDate(score.date)}
                     </td>
                     <td className="px-6 py-4">
                       <span 
                         className={`text-2xl font-bold ${
                           score.score === 100 ? 'text-yellow-400' : 'text-white'
                         }`}
-                        style={{ fontFamily: 'Marker Felt' }}
                       >
                         {score.score}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-emerald-200">
-                      {formatRelativeTime(score.date)}
-                    </td>
                     <td className="px-6 py-4 text-white/60 text-sm">
-                      {formatLastModified(score.updated_at)}
+                      {formatRelativeTime(score.updated_at)}
                     </td>
                   </tr>
                 ))
