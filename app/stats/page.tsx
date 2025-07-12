@@ -1,14 +1,15 @@
-import { Pool } from 'pg'
+'use client'
+import { useState, useEffect } from 'react'
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
-})
+interface ScoreData {
+  date: string
+  score: number
+  created_at: string
+  updated_at: string
+}
 
 function formatRelativeTime(dateString: string): string {
-  const scoreDate = new Date(dateString + 'T00:00:00Z') // Treat as UTC to avoid timezone issues
+  const scoreDate = new Date(dateString + 'T00:00:00Z')
   const now = new Date()
   const diffMs = now.getTime() - scoreDate.getTime()
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
@@ -35,27 +36,27 @@ function formatLastModified(dateString: string): string {
   })
 }
 
-async function getScoreStats() {
-  try {
-    const result = await pool.query(`
-      SELECT 
-        date, 
-        score, 
-        created_at, 
-        updated_at 
-      FROM friend_scores 
-      ORDER BY date DESC
-    `)
-    
-    return result.rows
-  } catch (error) {
-    console.error('Error fetching score stats:', error)
-    return []
-  }
-}
+export default function StatsPage() {
+  const [scores, setScores] = useState<ScoreData[]>([])
+  const [loading, setLoading] = useState(true)
 
-export default async function StatsPage() {
-  const scores = await getScoreStats()
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const response = await fetch('/api/stats')
+        if (response.ok) {
+          const data = await response.json()
+          setScores(data.scores)
+        }
+      } catch (error) {
+        console.error('Error fetching stats:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchStats()
+  }, [])
   
   return (
     <div className="min-h-screen bg-emerald-900 p-8">
@@ -75,7 +76,13 @@ export default async function StatsPage() {
               </tr>
             </thead>
             <tbody>
-              {scores.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-8 text-center text-white/60">
+                    Loading...
+                  </td>
+                </tr>
+              ) : scores.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-6 py-8 text-center text-white/60">
                     No scores recorded yet
