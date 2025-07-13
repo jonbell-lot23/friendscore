@@ -9,9 +9,19 @@ interface ScoreData {
 }
 
 function formatRelativeDate(dateString: string): string {
-  const scoreDate = new Date(dateString + 'T00:00:00Z')
+  const parts = dateString.split('-')
+  if (parts.length !== 3) return dateString
+  
+  const year = parseInt(parts[0])
+  const month = parseInt(parts[1]) - 1
+  const day = parseInt(parts[2])
+  
+  if (isNaN(year) || isNaN(month) || isNaN(day)) return dateString
+  
+  const scoreDate = new Date(year, month, day)
   const now = new Date()
-  const diffMs = now.getTime() - scoreDate.getTime()
+  const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const diffMs = nowDate.getTime() - scoreDate.getTime()
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
   
   if (diffDays === 0) return 'Today'
@@ -26,6 +36,9 @@ function formatRelativeDate(dateString: string): string {
 
 function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString)
+  
+  if (isNaN(date.getTime())) return dateString
+  
   const now = new Date()
   const diffMs = now.getTime() - date.getTime()
   const diffMinutes = Math.floor(diffMs / (1000 * 60))
