@@ -89,19 +89,18 @@ export default function StatsPage() {
               <tr className="bg-white/20">
                 <th className="px-6 py-3 text-left text-white font-semibold">Date</th>
                 <th className="px-6 py-3 text-left text-white font-semibold">Score</th>
-                <th className="px-6 py-3 text-left text-white font-semibold">Modified</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={3} className="px-6 py-8 text-center text-white/60">
+                  <td colSpan={2} className="px-6 py-8 text-center text-white/60">
                     Loading...
                   </td>
                 </tr>
               ) : scores.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="px-6 py-8 text-center text-white/60">
+                  <td colSpan={2} className="px-6 py-8 text-center text-white/60">
                     No scores recorded yet
                   </td>
                 </tr>
@@ -119,9 +118,6 @@ export default function StatsPage() {
                       >
                         {score.score}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 text-white/60 text-sm">
-                      {formatRelativeTime(score.updated_at)}
                     </td>
                   </tr>
                 ))
