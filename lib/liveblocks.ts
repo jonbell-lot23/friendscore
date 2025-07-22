@@ -11,6 +11,7 @@ export type Presence = {
   cursor: { x: number; y: number } | null
   isDragging: boolean
   score?: number
+  lastUpdate?: number
 }
 
 export type Storage = {
