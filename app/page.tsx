@@ -240,6 +240,14 @@ function FriendScoreRoom() {
             >
               {/* Cursor dot */}
               <div className="w-20 h-20 rounded-full bg-white/80 shadow-lg"></div>
+              {/* Score display for other user */}
+              {presence.isDragging && presence.score !== undefined && (
+                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2">
+                  <div className="text-lg font-semibold text-white/90">
+                    {presence.score}
+                  </div>
+                </div>
+              )}
             </div>
           )
         })}
