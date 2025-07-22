@@ -24,6 +24,11 @@ function FriendScoreRoom() {
       }
     }
     loadTodaysScore()
+    
+    // Clear presence on unmount
+    return () => {
+      updateMyPresence({ cursor: null, isDragging: false, score: undefined, lastUpdate: 0 })
+    }
   }, [])
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 })
   const containerRef = useRef<HTMLDivElement>(null)
@@ -63,7 +68,8 @@ function FriendScoreRoom() {
     updateMyPresence({
       cursor: { x: relativeX / rect.width, y: relativeY / rect.height },
       isDragging,
-      score: isDragging ? calculateScore(clientY, rect) : undefined
+      score: isDragging ? calculateScore(clientY, rect) : undefined,
+      lastUpdate: Date.now()
     })
     
     // No more blur effects - remove overlap tracking
@@ -202,13 +208,16 @@ function FriendScoreRoom() {
               top: myPresence.cursor.y * containerRef.current.getBoundingClientRect().height,
             }}
           >
-            <div className="w-20 h-20 rounded-full bg-blue-400/80 shadow-lg"></div>
+            <div className="w-20 h-20 rounded-full bg-white/80 shadow-lg"></div>
           </div>
         )}
 
         {/* Other users' cursors */}
         {others.map(({ connectionId, presence }) => {
           if (!containerRef.current || !presence.cursor) return null
+          
+          // Only show if presence was updated in the last 3 seconds
+          if (!presence.lastUpdate || Date.now() - presence.lastUpdate > 3000) return null
           
           const rect = containerRef.current.getBoundingClientRect()
           const x = presence.cursor.x * rect.width
@@ -241,7 +250,8 @@ export default function FriendScoreApp() {
       initialPresence={{
         cursor: null,
         isDragging: false,
-        score: undefined
+        score: undefined,
+        lastUpdate: Date.now()
       }}
     >
       <FriendScoreRoom />
