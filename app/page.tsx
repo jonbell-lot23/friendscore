@@ -31,6 +31,7 @@ function FriendScoreRoom() {
     }
   }, [])
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 })
+  const [dragStartY, setDragStartY] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
 
   const calculateScore = (clientY: number, rect: DOMRect) => {
@@ -44,8 +45,9 @@ function FriendScoreRoom() {
     
     const rect = containerRef.current.getBoundingClientRect()
     setIsDragging(true)
-    setFinalScore(null)
-    setDragPosition({ x: clientX - rect.left, y: clientY - rect.top })
+    const relativeY = clientY - rect.top
+    setDragPosition({ x: clientX - rect.left, y: relativeY })
+    setDragStartY(relativeY)
     setScore(calculateScore(clientY, rect))
   }
 
@@ -179,20 +181,16 @@ function FriendScoreRoom() {
 
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center">
-            {!isDragging && finalScore === null ? (
-              <div 
-                className="w-32 h-32 rounded-full border-8 border-white/80"
-              ></div>
-            ) : (
+            {finalScore !== null && (
               <div 
                 className={`text-8xl md:text-9xl font-bold ${
-                  (isDragging ? score : finalScore) === 100 ? 'text-yellow-400/90' : 'text-white/90'
+                  finalScore === 100 ? 'text-yellow-400/90' : 'text-white/90'
                 }`} 
                 style={{ 
                   fontFamily: 'Marker Felt'
                 }}
               >
-                {isDragging ? score : finalScore}
+                {finalScore}
               </div>
             )}
           </div>
@@ -209,6 +207,14 @@ function FriendScoreRoom() {
             }}
           >
             <div className="w-20 h-20 rounded-full bg-white/80 shadow-lg"></div>
+            {/* Score display while dragging */}
+            {isDragging && (
+              <div className="absolute -top-8 left-1/2 transform -translate-x-1/2">
+                <div className="text-lg font-semibold text-white/90">
+                  {score}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
